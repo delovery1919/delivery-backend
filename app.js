@@ -297,6 +297,44 @@ app.get('/locations/all', async (req, res) => {
     }
 });
 
+app.get('/locations/user-count', async (req, res) => {
+    try {
+        // Step 1: Find all locations
+        const locations = await Location.find({ isDeleted: false }).lean();
+
+        if (!locations || locations.length === 0) {
+            return res.status(404).json({ message: 'No locations found' });
+        }
+
+        // Step 2: Loop through each location and get the users associated with it
+        const locationUserData = await Promise.all(locations.map(async (location) => {
+            // Get all users for this location (active, non-deleted users)
+            const usersAtLocation = await User.find({
+                locationId: location._id,
+                isActive: true,
+                isDeleted: false
+            }).select('name email');  // Only select name and email for users
+
+            // Return location data with user count and user details
+            return {
+                locationId: location._id,
+                name: location.name,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                userCount: usersAtLocation.length,
+                users: usersAtLocation
+            };
+        }));
+
+        // Step 3: Send the response
+        res.status(200).json(locationUserData);
+
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+
 
 
 app.post('/attendance/checkin', async (req, res) => {
