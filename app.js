@@ -97,7 +97,7 @@ app.post('/users/create', async (req, res) => {
 
 
 
-        const alreadyExist = await User.findOne({ email: req.body.email, phone: req.body.phone });
+        const alreadyExist = await User.findOne({ email: req.body.email, phone: req.body.phone, loginId: req.body.loginId, });
 
         if (alreadyExist) {
             res.status(400).json({ message: "already exists" });
@@ -120,6 +120,22 @@ app.post('/users/create', async (req, res) => {
     }
 });
 
+
+app.post('/users/login', async (req, res) => {
+    try {
+        const user = await User.findOne({ loginId: req.body.loginId, pass: req.body.pass, isActive: true, isDeleted: false });
+
+        if (user) {
+            res.status(200).json(user);
+        } else {
+
+            res.status(400).json({ message: "User not found" });
+        }
+
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
 
 // get user by id
 app.get('/users/:id', async (req, res) => {
